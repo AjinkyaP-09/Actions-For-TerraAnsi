@@ -2,13 +2,34 @@ provider "aws" {
   region = var.aws_region # Uses the AWS region defined in variables.tf
 }
 
+#resource "aws_key_pair" "deployer_key" {
+#  key_name   = var.key_pair_name
+#  public_key = file("${path.module}/ssh-key.pub")
+#  tags = {
+#    Project = var.project_tag # Apply a project tag for resource organization
+#  }
+#}
+
+resource "tls_private_key" "ssh_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "local_file" "private_key_pem" {
+  content              = tls_private_key.ssh_key.private_key_pem
+  filename             = "${path.module}/id_rsa_deployer.pem"
+  file_permission      = "0600"
+  directory_permission = "0700"
+}
+
 resource "aws_key_pair" "deployer_key" {
   key_name   = var.key_pair_name
-  public_key = file("${path.module}/ssh-key.pub")
+  public_key = tls_private_key.ssh_key.public_key_openssh
   tags = {
-    Project = var.project_tag # Apply a project tag for resource organization
+    Project = var.project_tag
   }
 }
+
 
 # --- Security Group ---
 # This resource creates an AWS Security Group to control inbound and outbound traffic
