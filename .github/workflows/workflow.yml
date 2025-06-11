@@ -10,9 +10,9 @@ on:
   workflow_dispatch: # Allows manual trigger
 
 # Define environment variables that can be used across jobs.
-env:
+#env:
   # Set the AWS region for Terraform operations.
-  TF_VAR_aws_region: ap-south-1 # You can change this to your desired AWS region
+ # TF_VAR_aws_region: ap-south-1 # You can change this to your desired AWS region
 
 jobs:
   # Job to provision AWS infrastructure using Terraform.
@@ -30,7 +30,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.TF_VAR_aws_region }} # Use the AWS region defined in env variables
+          aws-region: ap-south-1 # Use the AWS region defined in env variables
 
       - name: Setup Terraform
         # Set up the Terraform CLI on the runner.
