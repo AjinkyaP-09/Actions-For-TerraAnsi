@@ -58,8 +58,7 @@ jobs:
       - name: Get Terraform Outputs
         id: tf_outputs
         run: |
-          PRIVATE_KEY=$(terraform output -raw private_key_pem)
-          echo "$PRIVATE_KEY" > id_rsa_github_action
+          terraform output -raw private_key_pem > id_rsa_github_action
           chmod 600 id_rsa_github_action
 
     # Define outputs for this job that can be consumed by other jobs.
@@ -95,7 +94,7 @@ jobs:
         # but consider security implications in production.
         run: |
           echo "[webservers]" > hosts.ini
-          echo "${{ needs.terraform_provision.outputs.instance_public_ip }} ansible_user=ubuntu ansible_ssh_private_key_file=./id_rsa_github_action ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> hosts.ini
+          echo "${{ needs.terraform_provision.outputs.instance_public_ip }} ansible_user=ubuntu ansible_ssh_private_key_file=./id_rsa_deployer.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> hosts.ini
           echo "Generated hosts.ini:"
           cat hosts.ini
         # This hosts.ini will be used by the ansible-playbook command.

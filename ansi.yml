@@ -1,99 +1,81 @@
 # ansi.yml
 ---
 - name: Install Docker on EC2 instance
-  hosts: all      # This playbook targets all hosts defined in the inventory
-  become: yes     # Run all tasks with elevated privileges (sudo)
-  gather_facts: yes # Gather facts about the remote host (e.g., OS distribution, release)
+  hosts: [webservers]
+  become: yes
+  gather_facts: yes
+
+  vars:
+    docker_release: "jammy"  # Force use of Ubuntu 22.04 repo even on newer systems like 24.04
 
   tasks:
     - name: Update apt package cache
       ansible.builtin.apt:
         update_cache: yes
-        force_apt_get: yes      # Forces apt-get to be used
-        cache_valid_time: 3600  # Keep cache valid for 1 hour to avoid frequent updates
+        force_apt_get: yes
+        cache_valid_time: 3600
 
     - name: Install necessary packages for Docker
-      # Installs prerequisite packages for Docker installation.
       ansible.builtin.apt:
         name:
-          - apt-transport-https # Required for HTTPS sources
-          - ca-certificates     # Required for validating SSL certificates
-          - curl                # Tool to transfer data from or to a server
-          - gnupg               # GNU Privacy Guard, for handling GPG keys
-          - lsb-release         # Provides information about the LSB distribution
-        state: present          # Ensures packages are installed
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
 
     - name: Ensure /etc/apt/keyrings directory exists
-      # Create the directory where Docker's GPG key will be stored,
-      # as recommended by Docker for newer Debian/Ubuntu versions.
       ansible.builtin.file:
         path: /etc/apt/keyrings
         state: directory
-        mode: '0755' # Standard permissions for directories
+        mode: '0755'
 
     - name: Add Docker's official GPG key to new location
-      # Download Docker's GPG key and de-armor it, then save it to the keyrings directory.
-      # 'creates' ensures the command only runs if the file doesn't already exist.
       ansible.builtin.shell:
         cmd: "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg"
         creates: /etc/apt/keyrings/docker.gpg
 
     - name: Ensure correct permissions for Docker GPG key
-      # Set appropriate permissions for the GPG key file.
       ansible.builtin.file:
         path: /etc/apt/keyrings/docker.gpg
-        mode: '0644' # Read-only for others
+        mode: '0644'
 
     - name: Set up the stable Docker repository
-      # Add Docker's stable repository to the system's apt sources list.
-      # Uses 'ansible_facts['distribution_release']' to get the correct Ubuntu release name (e.g., 'jammy').
       ansible.builtin.apt_repository:
-        repo: "deb [arch={{ ansible_facts['architecture'] }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_facts['distribution_release'] }} stable"
+        repo: "deb [arch={{ ansible_facts['architecture'] }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ docker_release }} stable"
         state: present
-        filename: docker # Name of the source list file (e.g., /etc/apt/sources.list.d/docker.list)
+        filename: docker
 
     - name: Update apt cache after adding Docker repo
-      # Update the package cache again after adding the new Docker repository.
       ansible.builtin.apt:
         update_cache: yes
         force_apt_get: yes
 
-    - name: Install Docker Engine, Docker CLI, containerd.io, and plugins
-      # Install the main Docker components.
-      ansible.builtin.apt:
-        name:
-          - docker-ce           # Docker Engine Community Edition
-          - docker-ce-cli       # Docker command-line interface
-          - containerd.io       # Container runtime
-          - docker-buildx-plugin # Plugin for building images
-          - docker-compose-plugin # Plugin for Docker Compose
-        state: present          # Ensures these packages are installed
+    - name: Install Docker using official convenience script
+      ansible.builtin.shell: |
+        curl -fsSL https://get.docker.com -o get-docker.sh
+        sh get-docker.sh
+      args:
+        creates: /usr/bin/docker
 
     - name: Add current user to docker group
-      # Add the user currently used for SSH (e.g., 'ubuntu') to the 'docker' group.
-      # This allows the user to run Docker commands without 'sudo'.
       ansible.builtin.user:
-        name: "{{ ansible_user }}" # Refers to the user Ansible connects as
+        name: "{{ ansible_user }}"
         groups: docker
-        append: yes             # Appends to existing groups
+        append: yes
 
-    - name: Restart Docker service (important for group changes to take effect)
-      # Restart the Docker daemon to ensure the user's group membership takes effect
-      # and Docker is running.
+    - name: Restart Docker service
       ansible.builtin.service:
         name: docker
         state: restarted
-        enabled: yes # Ensure Docker service starts on boot
+        enabled: yes
 
     - name: Verify Docker installation
-      # Run a simple Docker command ('docker run hello-world') to verify the installation.
-      # 'changed_when: false' prevents Ansible from marking this task as 'changed'
-      # because running 'hello-world' does not modify the system state in a persistent way.
       ansible.builtin.command: docker run hello-world
-      register: docker_hello_world_result # Registers the command output
-      changed_when: false                 # This command is for verification, not state change
+      register: docker_hello_world_result
+      changed_when: false
 
     - name: Print Docker Hello World result
-      # Display the output of the 'docker run hello-world' command.
       ansible.builtin.debug:
         msg: "{{ docker_hello_world_result.stdout }}"
