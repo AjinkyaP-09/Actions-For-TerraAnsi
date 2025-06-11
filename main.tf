@@ -54,7 +54,7 @@ resource "aws_instance" "docker_instance" {
 
   # Use a data source to automatically select a default public subnet within the default VPC.
   # This helps ensure the instance is reachable on the internet.
-  subnet_id = data.aws_subnet.default.id
+#  subnet_id = data.aws_subnet.default.id
 
   # user_data script executes commands on the instance when it first launches.
   # It updates package lists and installs Python 3 and pip, which are essential for Ansible.
@@ -85,15 +85,15 @@ data "aws_vpc" "default" {
 
 # Data source to fetch information about a default subnet within the default VPC.
 # This ensures the instance is placed in a public subnet to receive a public IP.
-data "aws_subnet" "default" {
-  vpc_id                  = data.aws_vpc.default.id
-  map_public_ip_on_launch = true                  # Ensures the subnet maps public IPs to new instances
-  availability_zone       = "${var.aws_region}a"  # Selects a subnet in the first AZ of the region for simplicity
-  filter {
-    name   = "default-for-az"
-    values = ["true"] # Filters for the default subnet within that AZ
-  }
-}
+#data "aws_subnet" "default" {
+#  vpc_id                  = data.aws_vpc.default.id
+#  map_public_ip_on_launch = true                  # Ensures the subnet maps public IPs to new instances
+#  availability_zone       = "${var.aws_region}a"  # Selects a subnet in the first AZ of the region for simplicity
+#  filter {
+#    name   = "default-for-az"
+#    values = ["true"] # Filters for the default subnet within that AZ
+#  }
+#}
 
 # --- Outputs ---
 # Define outputs to easily retrieve important information about the created resources.
