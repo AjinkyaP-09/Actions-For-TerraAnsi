@@ -1,0 +1,110 @@
+# .github/workflows/workflow.yml
+name: Terraform & Ansible Docker Install
+
+# Trigger the workflow on pushes to the 'main' branch
+# and allow manual triggering via the GitHub Actions UI.
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual trigger
+
+# Define environment variables that can be used across jobs.
+env:
+  # Set the AWS region for Terraform operations.
+  TF_VAR_aws_region: ap-south-1 # You can change this to your desired AWS region
+
+jobs:
+  # Job to provision AWS infrastructure using Terraform.
+  terraform_provision:
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner
+    steps:
+      - name: Checkout code
+        # Use the actions/checkout action to checkout your repository code.
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        # Configure AWS credentials using the aws-actions/configure-aws-credentials action.
+        # AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are retrieved from GitHub Secrets.
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.TF_VAR_aws_region }} # Use the AWS region defined in env variables
+
+      - name: Setup Terraform
+        # Set up the Terraform CLI on the runner.
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        # Initialize Terraform to download providers and modules.
+        id: init
+        run: terraform init
+
+      - name: Terraform Apply
+        # Apply the Terraform configuration to provision resources.
+        # -auto-approve flag bypasses interactive approval.
+        id: apply
+        run: terraform apply -auto-approve
+
+      - name: Get EC2 Public IP
+        # Extract the public IP address of the newly created EC2 instance
+        # from Terraform's output and make it available as a job output.
+        id: get_ip
+        run: |
+          EC2_PUBLIC_IP=$(terraform output -raw instance_public_ip)
+          echo "ec2_public_ip=$EC2_PUBLIC_IP" >> $GITHUB_OUTPUT
+        # The '>> $GITHUB_OUTPUT' command exports the variable as an output for the job.
+
+    # Define outputs for this job that can be consumed by other jobs.
+    outputs:
+      instance_public_ip: ${{ steps.get_ip.outputs.ec2_public_ip }}
+
+  # Job to configure the EC2 instance using Ansible to install Docker.
+  ansible_configure:
+    runs-on: ubuntu-latest
+    # This job depends on the 'terraform_provision' job to complete successfully,
+    # ensuring the EC2 instance is available before Ansible attempts to connect.
+    needs: terraform_provision
+    steps:
+      - name: Checkout code
+        # Checkout the repository code for Ansible playbook.
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        # Set up Python environment required for Ansible.
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible
+        # Install Ansible using pip.
+        run: pip install ansible
+
+      - name: Write Ansible Inventory
+        # Dynamically create the 'hosts.ini' file with the EC2 instance's public IP.
+        # 'ansible_user=ubuntu' assumes an Ubuntu AMI; change to 'ec2-user' for Amazon Linux.
+        # 'ansible_ssh_private_key_file' points to where the private key will be saved.
+        # 'ansible_ssh_common_args' disables strict host key checking, useful for ephemeral instances
+        # but consider security implications in production.
+        run: |
+          echo "[webservers]" > hosts.ini
+          echo "${{ needs.terraform_provision.outputs.instance_public_ip }} ansible_user=ubuntu ansible_ssh_private_key_file=./id_rsa_github_action ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> hosts.ini
+          echo "Generated hosts.ini:"
+          cat hosts.ini
+        # This hosts.ini will be used by the ansible-playbook command.
+
+      - name: Add SSH private key
+        # Securely write the SSH private key from GitHub Secrets to a file on the runner.
+        # The file permissions are set to 600 for security.
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./id_rsa_github_action
+          chmod 600 ./id_rsa_github_action
+        # This file (id_rsa_github_action) will be used by Ansible to connect to the EC2 instance.
+
+      - name: Run Ansible playbook
+        # Execute the Ansible playbook to install Docker.
+        # -i hosts.ini specifies the inventory file.
+        run: ansible-playbook -i hosts.ini ansi.yml
+
+
