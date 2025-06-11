@@ -127,3 +127,9 @@ output "instance_id" {
   description = "The ID of the EC2 instance."
   value       = aws_instance.docker_instance.id # Exports the ID of the EC2 instance
 }
+
+output "private_key_pem" {
+  value     = tls_private_key.ssh_key.private_key_pem
+  sensitive = true
+}
+
