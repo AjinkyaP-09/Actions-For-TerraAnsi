@@ -106,5 +106,6 @@ jobs:
         # Execute the Ansible playbook to install Docker.
         # -i hosts.ini specifies the inventory file.
         run: ansible-playbook -i hosts.ini ansi.yml
-
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: False
 
