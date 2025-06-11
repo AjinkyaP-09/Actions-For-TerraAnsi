@@ -55,6 +55,12 @@ jobs:
           EC2_PUBLIC_IP=$(terraform output -raw instance_public_ip)
           echo "ec2_public_ip=$EC2_PUBLIC_IP" >> $GITHUB_OUTPUT
         # The '>> $GITHUB_OUTPUT' command exports the variable as an output for the job.
+      - name: Get Terraform Outputs
+        id: tf_outputs
+        run: |
+          PRIVATE_KEY=$(terraform output -raw private_key_pem)
+          echo "$PRIVATE_KEY" > id_rsa_github_action
+          chmod 600 id_rsa_github_action
 
     # Define outputs for this job that can be consumed by other jobs.
     outputs:
