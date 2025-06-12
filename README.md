@@ -155,6 +155,7 @@ This repository includes two GitHub Actions workflows:
 9. It will write ```.tfstate``` file in S3 bucket.![Screenshot 2025-06-12 161731](https://github.com/user-attachments/assets/a9505418-44ae-4a90-82e6-ca29178d3c11)
 10. Also entry of LockID in DynamoDB.![Screenshot 2025-06-12 162032](https://github.com/user-attachments/assets/5fc0580a-ba41-46aa-97d7-57395f644dc6)
 11. Manually run ```Terraform Destroy Infrastructure``` workflow to destroy resources using ```.tfstate``` file in S3 bucket.
-![Screenshot 2025-06-12 154850](https://github.com/user-attachments/assets/94bbe9ec-05f1-42b2-bfc1-f5d865d705c6)
+![Screenshot 2025-06-12 154850](https://github.com/user-attachments/assets/94bbe9ec-05f1-42b2-bfc1-f5d865d705c6) ![image](https://github.com/user-attachments/assets/2b181947-5ded-4d21-889b-770678fa866e)
+
 12. Resource Cleanus is done properly.
 
