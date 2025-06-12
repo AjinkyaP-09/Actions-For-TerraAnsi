@@ -157,5 +157,5 @@ This repository includes two GitHub Actions workflows:
 11. Manually run ```Terraform Destroy Infrastructure``` workflow to destroy resources using ```.tfstate``` file in S3 bucket.
 ![Screenshot 2025-06-12 154850](https://github.com/user-attachments/assets/94bbe9ec-05f1-42b2-bfc1-f5d865d705c6) ![image](https://github.com/user-attachments/assets/2b181947-5ded-4d21-889b-770678fa866e)
 
-12. Resource Cleanus is done properly.
+12. Resource Cleanup is done properly.
 
