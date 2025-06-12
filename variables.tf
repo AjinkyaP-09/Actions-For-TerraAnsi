@@ -37,3 +37,17 @@ variable "project_tag" {
   type        = string
   default     = "TerraAnsiDocker" # Useful for identifying resources created by this setup.
 }
+# --- Variables for Terraform Remote Backend (S3) ---
+variable "s3_backend_bucket_name" {
+  description = "Name of the S3 bucket to store Terraform state."
+  type        = string
+  # IMPORTANT: Replace with a unique bucket name you've created in S3.
+  default     = "actions-for-terraansi" 
+}
+
+variable "dynamodb_lock_table_name" {
+  description = "Name of the DynamoDB table for Terraform state locking."
+  type        = string
+  # IMPORTANT: Replace with the DynamoDB table name you've created.
+  default     = "Actions-For-TerraAnsi" 
+}
