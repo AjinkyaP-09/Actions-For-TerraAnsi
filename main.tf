@@ -47,8 +47,7 @@ resource "aws_key_pair" "deployer_key" {
 
 
 # --- Security Group ---
-# This resource creates an AWS Security Group to control inbound and outbound traffic
-# for the EC2 instance.
+# This resource creates an AWS Security Group to control inbound and outbound traffic for the EC2 instance.
 resource "aws_security_group" "docker_sg" {
   name        = "${var.project_tag}-sg" # Name of the security group
   description = "Allow SSH and HTTP traffic to EC2 instance for Docker setup"
