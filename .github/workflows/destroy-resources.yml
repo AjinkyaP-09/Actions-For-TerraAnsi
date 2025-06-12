@@ -1,0 +1,44 @@
+# .github/workflows/destroy-workflow.yml
+name: Terraform Destroy Infrastructure
+
+# Allow manual triggering of this workflow via the GitHub Actions UI
+on:
+  workflow_dispatch: # Allows manual trigger
+
+# Define environment variables
+env:
+  TF_VAR_aws_region: ap-south-1 # Ensure this matches the region used in your main.tf/variables.tf
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner
+
+    steps:
+      - name: Checkout code
+        # Use the actions/checkout action to checkout your repository code.
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        # Configure AWS credentials using the aws-actions/configure-aws-credentials action.
+        # Ensure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set as GitHub Secrets.
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.TF_VAR_aws_region }}
+
+      - name: Setup Terraform
+        # Set up the Terraform CLI on the runner.
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        # Initialize Terraform to download providers and modules.
+        # It's crucial to initialize before destroy so Terraform knows what state to use.
+        run: terraform init
+
+      - name: Terraform Destroy
+        # Execute terraform destroy.
+        # The -auto-approve flag bypasses interactive confirmation.
+        # Be very careful with this in production environments!
+        run: terraform destroy -auto-approve
+
