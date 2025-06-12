@@ -17,10 +17,10 @@ provider "aws" {
 # and prevent concurrent modifications.
 terraform {
   backend "s3" {
-    bucket         = "ajinkya-pame-terraform-state-bucket" # <<< IMPORTANT: Use the actual bucket name you created
+    bucket         = "actions-for-terraansi" # <<< IMPORTANT: Use the actual bucket name you created
     key            = "terraform.tfstate"                    # Path to the state file within the bucket
     region         = "ap-south-1"                            # <<< IMPORTANT: Use the actual region where your S3 bucket is
-    dynamodb_table = "actions-for-terraansi"    # <<< IMPORTANT: Use the actual DynamoDB table name you created
+    dynamodb_table = "Actions-For-TerraAnsi"    # <<< IMPORTANT: Use the actual DynamoDB table name you created
     encrypt        = true                                   # Encrypts the state file at rest
   }
 }
